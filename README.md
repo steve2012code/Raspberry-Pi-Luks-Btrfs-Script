@@ -44,7 +44,7 @@ Takes 3 files as input:
 
 Example command to set-up an encrypted environment.  See [Example_Configs](Example_Configs) for formats and examples.
 ```
-sudo ./pi_build.sh -i ./image/ubuntu-24.04.1-preinstalled-server-arm64+raspi.img -b ./config/fstab -u ./config/user-data_luks -s ./config/.secrets_luks
+sudo ./pi_build.sh -i ./image/ubuntu-24.04.1-preinstalled-server-arm64+raspi.img -b ./Example_Configs/fstab -u ./Example_Configs/user-data_luks -s ./Example_Configs.secrets_luks
 ```
 
 ## Useful references
