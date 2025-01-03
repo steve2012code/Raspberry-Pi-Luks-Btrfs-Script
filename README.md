@@ -42,7 +42,7 @@ Takes 3 files as input:
     -s, --secrets-file          Relative path to secrets file
 ```
 
-Example command to set-up an encrypted environment.  See [Example config](Example configs) for formats and examples.
+Example command to set-up an encrypted environment.  See [Example_Configs](Example_Configs) for formats and examples.
 ```
 sudo ./pi_build.sh -i ./image/ubuntu-24.04.1-preinstalled-server-arm64+raspi.img -b ./config/fstab -u ./config/user-data_luks -s ./config/.secrets_luks
 ```
