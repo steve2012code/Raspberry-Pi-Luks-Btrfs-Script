@@ -55,9 +55,9 @@ sudo ./pi_build.sh -i ./image/ubuntu-24.04.1-preinstalled-server-arm64+raspi.img
 ## Environment
 Note, this has only been tested with:
    Raspberry Pi 5 with NVME PCI connected storage as the destination disk
-   Ubuntu 24.04 server image** for Raspberry Pi as the destination OS
+   [Ubuntu 24.04 server image](https://cdimage.ubuntu.com/releases/24.04.1/release/ubuntu-24.04.1-preinstalled-server-arm64+raspi.img.xz) for Raspberry Pi as the destination OS
    This script running on the same Raspberry Pi 5, booted from a SD card with Raspberry Pi Desktop OS, created using the official Raspbery Pi imager. \
-      **This image uses the label "writeable" for the root partition.  This script relies on this label!  ToDo - Update to be more flexible.
+      Note - This image uses the label "writeable" for the root partition.  This script relies on this label!  ToDo - Update to be more flexible.
 
 ## Caveats
 Please note that the script doesn't fail elegantly.  If it breaks for any reason, temporary mounts and files will not be deleted.  All temporary files
