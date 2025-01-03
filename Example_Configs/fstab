@@ -1,0 +1,12 @@
+# Defines the BTRFS sub volumes required.  Only lines containing "btrfs" will be used
+LABEL=writable  /  btrfs  defaults,noatime,autodefrag,compress=lzo,subvol=@ 0 0
+LABEL=writable  /root  btrfs  defaults,noatime,autodefrag,compress=lzo,subvol=@root_home 0 0
+LABEL=writable  /home  btrfs  defaults,noatime,autodefrag,compress=lzo,subvol=@home 0 0
+LABEL=writable  /home/{{user_name}}  btrfs  defaults,noatime,autodefrag,compress=lzo,subvol=@{{user_name}}_home 0 0
+LABEL=writable  /var/log  btrfs  defaults,noatime,autodefrag,compress=lzo,subvol=@var_log 0 0
+LABEL=writable  /tmp btrfs defaults,noatime,autodefrag,compress=lzo,subvol=@tmp 0 0
+LABEL=writable  /var/lib/postgresql btrfs defaults,noatime,autodefrag,compress=lzo,nodatacow,subvol=@var_lib_postgresql 0 0
+LABEL=writable  /var/lib/docker btrfs defaults,noatime,autodefrag,compress=lzo,subvol=@var_lib_docker 0 0
+LABEL=writable  /var/cache btrfs defaults,noatime,autodefrag,compress=lzo,subvol=@var_cache 0 0
+LABEL=writable  /var/spool btrfs defaults,noatime,autodefrag,compress=lzo,subvol=@var_spool 0 0
+LABEL=writable  /var/tmp btrfs defaults,noatime,autodefrag,compress=lzo,subvol=@var_tmp 0 0
