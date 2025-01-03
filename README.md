@@ -2,11 +2,11 @@
 
 ## Overview
 Bash script to set-up a Raspberry Pi with a BTRFS file system, optionally LUKS encryption, Snapper snapshot management and a number of base packages.\
-Script takes 4 files as input:\
-1. The image file (.img) must be made for the Raspberry Pi\
-2. brtfs-fstab file - Defines the required BTRFS Sub Volumes.  Only line containing "btrfs" will be read.  Will be used to augment the fstab file provided with the image\
+Script takes 4 files as input:
+1. The image file (.img) must be made for the Raspberry Pi
+2. brtfs-fstab file - Defines the required BTRFS Sub Volumes.  Only line containing "btrfs" will be read.  Will be used to augment the fstab file provided with the image
 3. user-data file -   The official Raspberry imagers creates a file called user-data in /boot.  On first boot this is used to configure the Pi.  The file format and 
-                      capability appears to comply with the cloud-init format, see link below.\
+                      capability appears to comply with the cloud-init format, see link below.
 4. secrets file -     Used to hold sensitive date that can be substituted into the user-data and / or brtfs-fstab file.  The format is:
                          `[secret_name][delimiter][secret_value]`\
                       Where secret_name matches text in user-data and /or fstab file which is to be substituted.  Make sure it doesn't match anything else
@@ -19,7 +19,7 @@ Script takes 4 files as input:\
 Additionally there are the following flags:\
   -d / --debug -        Just "set -x" to show debug detail\
   -n / --no-interact    If this is present, the script will use the first non-mounted disk as the destination.  Use with caution!
-                        If this isn't present, the script will prompt for confirmation or an alternative destintation\
+                        If this isn't present, the script will prompt for confirmation or an alternative destintation
 
 ## Example usage
 Display help information
