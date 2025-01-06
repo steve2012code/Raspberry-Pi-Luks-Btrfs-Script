@@ -241,7 +241,7 @@ echo
 IFS=$'\n'
 index=0
 for line in $(cat $secrets_file); do
-    if [ ! "${line:0:1}" == "#" ]; then
+    if [[ ! "${line:0:1}" == "#" ]]; then
         if [[ $line =~ "delimiter" ]]; then
             delimiter=$(echo $line | awk -F '#' '{ print $1 }')
         else
@@ -322,7 +322,7 @@ fi
 # Read through the btrfs_fstab and create the required BTRFS subvolumes
 IFS=$'\n'
 for line in $(cat /tmp/.btrfs_fstab); do
-    if [ ! "${line:0:1}" == "#" ]; then
+    if [[ ! "${line:0:1}" == "#" ]]; then
         if echo "$line" | grep -q "btrfs"; then
             mount_point=$(echo "$line" | awk -F ' ' '{ print $2 }')
             subvol_name=$(echo "$line" | awk -F ' ' '{ print $4 }' | awk -F 'subvol=' '{ print $2 }')
@@ -337,7 +337,7 @@ umount -v /tmp/new_root
 # Read through the btrfs_fstab and mount the newly created BTRFS subvolumes
 IFS=$'\n'
 for line in $(cat /tmp/.btrfs_fstab); do
-    if [ ! "${line:0:1}" == "#" ]; then
+    if [[ ! "${line:0:1}" == "#" ]]; then
         if echo "$line" | grep -q "btrfs"; then
             mount_point=$(echo "$line" | awk -F ' ' '{ print $2 }')
             subvol_name=$(echo "$line" | awk -F ' ' '{ print $4 }' | awk -F 'subvol=' '{ print $2 }')
@@ -369,7 +369,7 @@ rm  /tmp/.user-data
 
 # Edit the cmdline.txt file in the boot partition to reflect the BTFRS file system and add encryption detail, if needed
 sed -i 's|'"ext4"'|'"btrfs rootflags=subvol=@"'|' /tmp/boot/cmdline.txt
-if [ ! $luks_passphrase == "" ]; then
+if [[ ! $luks_passphrase == "" ]]; then
     sed -i 's|$|'" cryptdevice=""$root_partition_path"":""$encrypted_root_partition_name"'|' /tmp/boot/cmdline.txt
 fi
 echo "/tmp/boot/cmdline.txt file contents:"
@@ -388,7 +388,7 @@ fi
 sed -i 's|'"LABEL=writable"'|'"#LABEL=writeable"'|' /tmp/new_root/@/etc/fstab
 IFS=$'\n'
 for line in $(cat /tmp/.btrfs_fstab); do
-    if [ ! "${line:0:1}" == "#" ]; then
+    if [[ ! "${line:0:1}" == "#" ]]; then
         if echo "$line" | grep -q "btrfs"; then
            sed -i -e '$a'"$line" /tmp/new_root/@/etc/fstab
         fi
@@ -399,7 +399,7 @@ cat /tmp/new_root/@/etc/fstab
 echo
 
 # Edit the crypttab file to add encryption detail, if needed
-if [ ! $luks_passphrase == "" ]; then
+if [[ ! $luks_passphrase == "" ]]; then
     sed -i -e '$a'"$encrypted_root_partition_name"" ""$root_partition_path"" none luks" /tmp/new_root/@/etc/crypttab
 fi
 echo "/tmp/new_root/@/etc/crypttab file contents:"
@@ -412,7 +412,7 @@ IFS=$'\n'
 for line in $(cat /tmp/.btrfs_fstab); do
     #echo "$line"
     #echo "${line:0:1}"
-    if [ ! "${line:0:1}" == "#" ]; then
+    if [[ ! "${line:0:1}" == "#" ]]; then
         if echo "$line" | grep -q "btrfs"; then
            subvol_name=$(echo "$line" | awk -F ' ' '{ print $4 }' | awk -F 'subvol=' '{ print $2 }')
            umount -v /tmp/new_root/$subvol_name
@@ -425,7 +425,7 @@ rm /tmp/.btrfs_fstab
 rm -rf /tmp/temp_new_root
 
 echo
-if [ $luks_passphrase == "" ]; then
+if [[ $luks_passphrase == "" ]]; then
     echo "Completed setting up "$disk". Now shutdown and boot from "$disk"."
 else
     echo "Completed setting up "$disk". Now:"
