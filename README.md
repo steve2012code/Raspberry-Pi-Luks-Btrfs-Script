@@ -7,17 +7,13 @@ Script takes 4 files as input:
 2. brtfs-fstab file - Defines the required BTRFS Sub Volumes.  Only line containing "btrfs" will be read.  Will be used to augment the fstab file provided with the image
 3. user-data file -   The official Raspberry imagers creates a file called user-data in /boot.  On first boot this is used to configure the Pi.  The file format and 
                       capability appears to comply with the cloud-init format, see link below.
-4. secrets file -     Used to hold sensitive date that can be substituted into the user-data and / or brtfs-fstab file.  The format is:
-                         `[secret_name][delimiter][secret_value]`\
-                      Where secret_name matches text in user-data and /or fstab file which is to be substituted.  Make sure it doesn't match anything else
-                      The delimiter is taken from the first line of this file which does not begin with \#.  Any text up to `#delimiter` is used
-                      as the delimiter, including any spaces.  Make sure the delimiter doesn't match any string in secret_name or secret_value
-                      The presence of a luks_passphase secret_name will enable encryption.  For example: \
-                         `luks_passphrase : test123` \
-                      The luks_passphrase secret_name must be called "luks_passphrase".  All other secret_names are user configurable.  
-                      If there is no line containing "luks_passphrase", the disk will not be encrypted.\
+                      Any lines beginning `#enc#` will only be applied if encyrption is required, see secrets file
+5. secrets file -     Used to hold sensitive date that can be substituted into the user-data and / or brtfs-fstab file.  The file format is yaml.
+                      The presence of a luks_passphase secret_name will enable encryption.  For example:
+                        `luks_passphrase : test123`
+                      The luks_passphrase secret_name must be called "luks_passphrase".  All other secret_names are user configurable
 Additionally there are the following flags:\
-  -d / --debug -        Just "set -x" to show debug detail\
+  -d / --debug -        Just `set -x` to show debug detail\
   -n / --no-interact    If this is present, the script will use the first non-mounted disk as the destination.  Use with caution!
                         If this isn't present, the script will prompt for confirmation or an alternative destintation
 
