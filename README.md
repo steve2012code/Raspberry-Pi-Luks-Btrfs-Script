@@ -6,11 +6,11 @@ Script takes 4 files as input:
 1. The image file (.img) must be made for the Raspberry Pi
 2. brtfs-fstab file - Defines the required BTRFS Sub Volumes.  Only line containing "btrfs" will be read.  Will be used to augment the fstab file provided with the image
 3. user-data file -   The official Raspberry imagers creates a file called user-data in /boot.  On first boot this is used to configure the Pi.  The file format and 
-                      capability appears to comply with the cloud-init format, see link below.
+                      capability appears to comply with the cloud-init format, see link below.  
                       Any lines beginning `#enc#` will only be applied if encyrption is required, see secrets file
 5. secrets file -     Used to hold sensitive date that can be substituted into the user-data and / or brtfs-fstab file.  The file format is yaml.
-                      The presence of a luks_passphase secret_name will enable encryption.  For example:
-                        `luks_passphrase : test123`
+                      The presence of a luks_passphase secret_name will enable encryption.  For example: \
+                        `luks_passphrase : test123` \
                       The luks_passphrase secret_name must be called "luks_passphrase".  All other secret_names are user configurable
 Additionally there are the following flags:\
   -d / --debug -        Just `set -x` to show debug detail\
@@ -40,7 +40,7 @@ Takes 3 files as input:
 
 Example command to set-up an encrypted environment.  See [Example_Configs](Example_Configs) for formats and examples.
 ```
-sudo ./pi_build.sh -i ./image/ubuntu-24.04.1-preinstalled-server-arm64+raspi.img -b ./Example_Configs/fstab -u ./Example_Configs/user-data_luks -s ./Example_Configs.secrets_luks
+sudo ./pi_build.sh -i ./image/ubuntu-24.04.1-preinstalled-server-arm64+raspi.img -b ./Example_Configs/fstab -u ./Example_Configs/user-data -s ./Example_Configs.secrets_luks.yaml
 ```
 
 ## Useful references
@@ -58,5 +58,8 @@ Note, this has only been tested with:
 ## Caveats
 Please note that the script doesn't fail elegantly.  If it breaks for any reason, temporary mounts and files will not be deleted.  All temporary files
 and folders are created in the /tmp directory, so a reboot will tidy everything up.
+
+## Dependencies
+This scripts requires the btrfs-progs, cryptsetup and yq packages to be installed.
 
 This script has not been extensively tested, use at your own risk
