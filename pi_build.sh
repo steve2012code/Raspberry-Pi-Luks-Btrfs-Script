@@ -4,13 +4,11 @@
 # Script takes 4 files as input:
 #   1. The image file (.img) must be made for the Raspberry Pi
 #   2. brtfs-fstab file - Defines the required BTRFS Sub Volumes.  Only line containing "btrfs" will be read.  Will be used to augment the fstab file provided with the image
+#                         Any secrets to be substituted need to be in the format: {{secret_name}} (with secret_name defined in the secrets file)
 #   3. user-data file -   The official Raspberry imagers creates a file called user-data in /boot.  On first boot this is used to configure the Pi.  The file format and 
 #                         capability appears to comply with the cloud-init format, see link below.
-#   4. secrets file -     Used to hold sensitive date that can be substituted into the user-data and / or brtfs-fstab file.  The format is:
-#                            [secret_name][delimiter][secret_value]
-#                         Where secret_name matches text in user-data and /or fstab file which is to be substituted.  Make sure it doesn't match anything else
-#                         The delimiter is taken from the first line of this file which does not begin with #.  Any text up to "#delimiter" is used
-#                         as the delimiter, including any spaces.  Make sure the delimiter doesn't match any string in secret_name or secret_value
+#                         Any secrets to be substituted need to be in the format: {{secret_name}} (with secret_name defined in the secrets file)
+#   4. secrets file -     Used to hold sensitive date that can be substituted into the user-data and / or brtfs-fstab file.  The file format is yaml.
 #                         The presence of a luks_passphase secret_name will enable encryption.  For example:
 #                            luks_passphrase : test123
 #                         The luks_passphrase secret_name must be called "luks_passphrase".  All other secret_names are user configurable
@@ -152,6 +150,13 @@ if [[ $? != 0 ]]; then
     exit
 fi
 
+# Check yq (yaml parser) is installed
+dpkg -s yq > /dev/null
+if [[ $? != 0 ]]; then
+    echo "yq (yaml parser) needs to be installed - sudo apt install yq"
+    exit
+fi
+
 # Identify disk with no mounted partitions
 IFS=$'\n'
 for line in $(lsblk --noheadings --raw -o name,type | grep disk); do
@@ -165,7 +170,7 @@ done
 
 disk_path="/dev/"$disk
 
-# Check with the used if this is the disk to be used
+# Check with the user if this is the disk to be used
 if ! $no_interact; then
     while true; do
         read -p "The destination disk is: "$disk_path". Is this correct? (Yes / No / Cancel):" response
@@ -238,43 +243,30 @@ echo "The destination root partition is: "$root_partition_path
 echo
 
 # Read secrets from provided secrets file into an array
-IFS=$'\n'
-index=0
-for line in $(cat $secrets_file); do
-    if [[ ! "${line:0:1}" == "#" ]]; then
-        if [[ $line =~ "delimiter" ]]; then
-            delimiter=$(echo $line | awk -F '#' '{ print $1 }')
-        else
-            secrets[index]=$(echo $line)
-            index=$(($index+1))
-        fi
-    fi
-done
+secrets=( $(cat "$secrets_file" | yq '.secrets[]' | jq 'keys_unsorted' | jq -r @sh | tr -d \'\") )
 
 # Create temporary user-data file
 cp $user_data_file /tmp/.user-data
 
-luks_passphrase=""
-# Substitute secrets into temporary user-name file and assign luks_passphrase to a variable if it exists
-for secret in "${secrets[@]}"; do
-    secret_name=$(echo $secret | awk -F $delimiter '{ print $1 }')
-    secret_value=$(echo $secret | awk -F $delimiter '{ print $2 }')
-    if [[ $secret_name == "luks_passphrase" ]] ; then
-        luks_passphrase=$secret_value
-    else
-        sed -i -e 's|'"$secret_name"'|'"$secret_value"'|g' /tmp/.user-data 
-    fi
-done 
-
 # Create temporary fstab file
 cp $btrfs_fstab /tmp/.btrfs_fstab
 
-# Substitute secrets into temporary fstab file
+luks_passphrase=""
+# Substitute secrets into temporary user-name and btrfs_fstab files and assign luks_passphrase to a variable if it exists
 for secret in "${secrets[@]}"; do
-    secret_name=$(echo $secret | awk -F $delimiter '{ print $1 }')
-    secret_value=$(echo $secret | awk -F $delimiter '{ print $2 }')
-    sed -i -e 's|'"$secret_name"'|'"$secret_value"'|g' /tmp/.btrfs_fstab
-done 
+    secret_name=$secret
+    secret_value=$(cat $secrets_file | yq '.secrets[]' | jq --arg key "$secret_name" -r '.[$key]' | grep -v null )
+    # Escape line breaks (otherwise the subsequent sed command fails for multi line secrets values)
+    secret_value=$(printf '%s\n' "$secret_value" | sed 's|$|\\|')
+    # Remove escape character from last line
+    secret_value=${secret_value%?}
+    if [[ $secret_name == "luks_passphrase" ]] ; then
+        luks_passphrase=$secret_value
+    else
+        sed -i -e 's|{{'"$secret_name"'}}|'"$secret_value"'|g' /tmp/.user-data
+        sed -i -e 's|{{'"$secret_name"'}}|'"$secret_value"'|g' /tmp/.btrfs_fstab
+    fi
+done
 
 # Create temporary boot directory for mounting
 mkdir -p /tmp/boot
@@ -359,6 +351,15 @@ btrfs subvolume list /tmp/new_root/@
 echo "Copying contents to root directory..."
 rsync -ar --stats /tmp/temp_root_store/ /tmp/new_root/@/
 echo
+
+# Edit user-data file according to the encryption requirement
+if [[ ! $luks_passphrase == "" ]]; then
+    # Remove #enc# from the begining of lines in user-data file is encryption is required
+    sed -i 's|^'"#enc#"'||g' /tmp/.user-data
+else
+    # Remove any lines begining with #enc# in user-data as encryption is not required
+    sed -i -e '/^'"#enc#"'/ d' /tmp/.user-data
+fi
 
 # Copy temporary user-data file to the boot partiton, display contents and then delete
 cp  /tmp/.user-data /tmp/boot/user-data
