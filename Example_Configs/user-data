@@ -1,5 +1,18 @@
 #cloud-config
-# Lines beginning #enc# are only applied if a luks_passphrase is present in the secret file.  
+
+# NOTE Lines beginning #enc# are only applied if a luks_passphrase is present in the secret file.  
+
+# This is the user-data configuration file for cloud-init. 
+# The cloud-init documentation has more details:
+#
+# https://cloudinit.readthedocs.io/
+#
+# Please note that the YAML format employed by this file is sensitive to
+# differences in whitespace; take care to only use spaces for
+# indentation. See the following link for more details:
+#
+# https://en.wikipedia.org/wiki/YAML
+#
 resize_rootfs: false
 hostname: {{host_name}}
 manage_etc_hosts: true
