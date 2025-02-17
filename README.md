@@ -11,6 +11,7 @@ Script takes 4 files as input:
 4. secrets file -     Used to hold sensitive date that can be substituted into the user-data and or brtfs-fstab file.  The format is yaml.  Multi line secrets (such as Private Keys are supported).  The presence of a luks_passphase secret_name will enable encryption, for example: `luks_passphrase : test123`.  The luks_passphrase secret_name must be called `luks_passphrase`.  All other secret_names are user configurable.  If there is no line containing "luks_passphrase", the disk will not be encrypted. 
 
 Additionally there are the following flags: 
+
 -d / --debug -        Just "set -x" to show debug detail 
 -n / --no-interact    If this is present, the script will use the first non-mounted disk as the destination.  Use with caution! 
 If this isn't present, the script will prompt for confirmation or an alternative destintation 
