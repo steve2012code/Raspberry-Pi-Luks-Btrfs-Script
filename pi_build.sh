@@ -95,66 +95,72 @@ if $debug_mode; then set -x; fi
 if [[ $image_file == "" ]]; then
     echo "No image-file provided"
     echo "$usage"
-    exit;
+    exit 1;
 fi
 
 if [[ ! -f $image_file ]]; then
     echo "image file: "$image_file" does not exist"
-    exit;
+    exit 1;
 fi
 
 if [[ $btrfs_fstab == "" ]]; then
     echo "No btrfs_fstab provided"
     echo "$usage"
-    exit;
+    exit 1;
 fi
 
 if [[ ! -f $btrfs_fstab ]]; then
     echo "btrfs_fstab file: "$btrfs_fstab" does not exist"
-    exit;
+    exit 1;
 fi
 
 if [[ $user_data_file == "" ]]; then
     echo "No user-data-file provided"
     echo "$usage"
-    exit;
+    exit 1;
 fi
 
 if [[ ! -f $user_data_file ]]; then
     echo "user_data_file: "$user_data_file" does not exist"
-    exit;
+    exit 1;
 fi
 
 if [[ $secrets_file == "" ]]; then
     echo "No secrets-file provided"
     echo "$usage"
-    exit;
+    exit 1;
 fi
 
 if [[ ! -f $secrets_file ]]; then
     echo "secrets_file: "$secrets_file" does not exist"
-    exit;
+    exit 1;
+fi
+
+# Check Secrets File contains valid yaml
+if [[ ! $(cat "$secrets_file" | yq -e '.secrets[]') ]]; then
+    echo "Secrets File ""$secrets_file"" does not contain valid yaml.  Please correct and rerun script.  Script exiting."
+    exit 1;
 fi
 
 # Check BTRFS is installed
 dpkg -s btrfs-progs > /dev/null
 if [[ $? != 0 ]]; then
     echo "BTRFS needs to be installed - sudo apt install btrfs-progs"
-    exit
+    exit 1;
 fi
 
 # Check cryptsetup is installed
 dpkg -s cryptsetup > /dev/null
 if [[ $? != 0 ]]; then
     echo "cryptsetup needs to be installed - sudo apt install cryptsetup"
-    exit
+    exit 1;
 fi
 
 # Check yq (yaml parser) is installed
 dpkg -s yq > /dev/null
 if [[ $? != 0 ]]; then
     echo "yq (yaml parser) needs to be installed - sudo apt install yq"
-    exit
+    exit 1;
 fi
 
 # Identify disk with no mounted partitions
@@ -244,6 +250,10 @@ echo
 
 # Read secrets from provided secrets file into an array
 secrets=( $(cat "$secrets_file" | yq '.secrets[]' | jq 'keys_unsorted' | jq -r @sh | tr -d \'\") )
+if [[ $? -ne 0 ]]; then
+    echo "The ""$secrets_file"" contains yaml formatting errors.  Please correct."
+    exit
+fi
 
 # Create temporary user-data file
 cp $user_data_file /tmp/.user-data
@@ -256,15 +266,34 @@ luks_passphrase=""
 for secret in "${secrets[@]}"; do
     secret_name=$secret
     secret_value=$(cat $secrets_file | yq '.secrets[]' | jq --arg key "$secret_name" -r '.[$key]' | grep -v null )
-    # Escape line breaks (otherwise the subsequent sed command fails for multi line secrets values)
-    secret_value=$(printf '%s\n' "$secret_value" | sed 's|$|\\|')
-    # Remove escape character from last line
-    secret_value=${secret_value%?}
+    #Special handling for LUKS Passphrase (the only predefined Secret Name)
     if [[ $secret_name == "luks_passphrase" ]] ; then
         luks_passphrase=$secret_value
     else
-        sed -i -e 's|{{'"$secret_name"'}}|'"$secret_value"'|g' /tmp/.user-data
-        sed -i -e 's|{{'"$secret_name"'}}|'"$secret_value"'|g' /tmp/.btrfs_fstab
+        lines_in_secret_value=$(echo "$secret_value" | wc -l)
+        # Different handling needed for single line Secret Values and multiple line Secret Values
+        if [ $lines_in_secret_value -eq 1 ] ; then
+            # Single line Secret Value substitutions
+            sed -i -e 's|{{'"$secret_name"'}}|'"$secret_value"'|g' /tmp/.user-data
+            sed -i -e 's|{{'"$secret_name"'}}|'"$secret_value"'|g' /tmp/.btrfs_fstab
+        else
+            # Multiple line Secret Value substitutions, preserving yaml indentation
+            file="/tmp/.user-data"
+            awk -v key="{{""$secret_name""}}" -v replacement="$secret_value" '
+            BEGIN {split(replacement, lines, "\n")}
+            {
+                if (match($0, key)) {
+                indent = substr($0, 1, RSTART - 1)
+                print indent lines[1]
+                for (i = 2; i <= length(lines); i++) {
+                    print indent lines[i]
+                }
+                } else {
+                print
+                }
+            }
+            ' /tmp/.user-data > /tmp/.user-data_tmp && mv /tmp/.user-data_tmp /tmp/.user-data
+        fi
     fi
 done
 
