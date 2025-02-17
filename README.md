@@ -13,7 +13,9 @@ Script takes 4 files as input:
 Additionally there are the following flags: 
 
 -d / --debug -        Just "set -x" to show debug detail 
+
 -n / --no-interact    If this is present, the script will use the first non-mounted disk as the destination.  Use with caution! 
+
 If this isn't present, the script will prompt for confirmation or an alternative destintation 
 
 ## Example usage 
